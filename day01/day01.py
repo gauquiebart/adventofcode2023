@@ -1004,21 +1004,60 @@ nine35gzmlt
 kdkjqdkvgs2
 """
 
-testInput = """
+testInputPartOne = """
 1abc2
 pqr3stu8vwx
 a1b2c3d4e5f
 treb7uchet"""
 
-#input = testInput
-input = puzzleInput
-
-def parseDigits(s) :
+def parsePureDigits(s) :
     return re.findall('\d', s)
 
-def firstAndLast(digits) :
-    return int(digits[0]) * 10 + int(digits[-1])
+def firstAndLastAsNumber(digits):
+    return int(digits[0]), int(digits[-1]) 
+
+def calibrationValue(digitTuple):
+    return digitTuple[0] * 10 + digitTuple[1]
+
+def add(a, b):
+    return a + b
+
+def part1(s) :
+    return reduce(add, map(calibrationValue, map(firstAndLastAsNumber, map(parsePureDigits, s.split()))))
+
+print(part1(testInputPartOne))
+print(part1(puzzleInput))
 
 
-print(reduce(lambda x, y: x+y, map(firstAndLast, map(parseDigits, input.split()))))
+testInputPartTwo = """
+two1nine
+eightwothree
+abcone2threexyz
+xtwone3four
+4nineeightseven2
+zoneight234
+7pqrstsixteen"""
 
+def parsePureDigitsOrNumbersWrittenInLetters(s) :
+    result = []
+    for m in re.finditer('(?=(\d|one|two|three|four|five|six|seven|eight|nine))', s):
+        result.append(m.group(1))
+    return result
+
+numberWrittenInLettersToDigitMapping = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven' : 7, 'eight': 8, 'nine': 9}
+
+def translateToDigit(s) :
+    if (s in numberWrittenInLettersToDigitMapping): 
+        return numberWrittenInLettersToDigitMapping[s]
+    else:
+        return s
+    
+def translateToDigits(aList):
+    return list(map(translateToDigit, aList))
+
+def part2(s) :
+     return reduce(add, map(calibrationValue, map(firstAndLastAsNumber, map(translateToDigits, map(parsePureDigitsOrNumbersWrittenInLetters, s.split())))))
+
+print(part2(testInputPartTwo))
+print(part2(puzzleInput))
+print(parsePureDigitsOrNumbersWrittenInLetters("eighthree"))
