@@ -101,7 +101,7 @@ Game 98: 2 blue, 14 green, 2 red; 7 green, 1 blue; 1 blue, 1 red, 3 green; 2 red
 Game 99: 3 green, 8 red, 7 blue; 6 red, 13 blue; 12 red, 4 green, 4 blue; 12 red, 8 green, 3 blue; 11 blue, 11 red, 4 green
 Game 100: 2 red, 13 blue, 1 green; 1 green, 12 blue; 1 red, 5 blue, 1 green; 3 blue, 3 red"""
 
-testInputPartOne = """Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+testInput = """Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
 Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
 Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
 Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
@@ -153,8 +153,24 @@ def add(a, b):
 def part1(s) :
     return reduce(add, map(gameNumber, filter(isGamePossible, map(parseGames, s.splitlines()))))
 
-print(part1(testInputPartOne))
+print(part1(testInput))
 print(part1(puzzleInput))
+
+def filterCubesOnColor(cs, colorToFilter):
+    return filter(lambda c: color(c) == colorToFilter, sum(cs, []))
+
+def highestNumber(cubes):
+    return reduce(max, map(number, cubes))
+
+def powerOfCubeSets(cs):
+    return highestNumber(filterCubesOnColor(cs, "red")) * highestNumber(filterCubesOnColor(cs, "blue")) * highestNumber(filterCubesOnColor(cs, "green"))
+
+def part2(s) :
+    return reduce(add, map(powerOfCubeSets, map(cubeSets, map(parseGames, s.splitlines()))))
+
+print(part2(testInput))
+print(part2(puzzleInput))
+
 
 
 
