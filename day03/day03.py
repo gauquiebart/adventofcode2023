@@ -189,11 +189,23 @@ def eachRowMergedWithPreviousCurrentAndNextRow(rows):
 
     return eachRowMergedWithPreviousCurrentAndNext
 
+#from: https://www.composingprograms.com/pages/16-higher-order-functions.html#currying
+def curry2(f):
+        """Return a curried version of the given two-argument function."""
+        def g(x):
+            def h(y):
+                return f(x, y)
+            return h
+        return g
+
+def curryWith(f, aRange):
+    return curry2(f)(aRange)
+
 def isOverlapping(ra, rb):
     return ra[-1] >= rb[0] and rb[-1] >= ra[0]
 
 def areAnyRangesOverlapping(aRange, otherRanges):
-    return any(map(lambda otherRange: isOverlapping(aRange, otherRange), otherRanges))
+    return any(map(curryWith(isOverlapping, aRange), otherRanges))
 
 def add(a, b):
     return a + b
@@ -201,21 +213,18 @@ def add(a, b):
 def flatten(matrix):
      return list(reduce(add, matrix, []))
 
-def sumNumbers(allNumbers):
-    return reduce(add, flatten(map(lambda numbers: list(map(numberOf, numbers)), allNumbers)))
-
 def part1(s) :
     lines = s.splitlines()
     numbers = list(map(parseNumbers, lines))
     symbols = list(map(parseSymbols, lines))
     eachSymbolRowMergedWithPreviousCurrentAndNext = eachRowMergedWithPreviousCurrentAndNextRow(symbols)
 
-    numbersAdjacentToAnyOfTheSymbols = []
+    numberTuplesAdjacentToAnyOfTheSymbols = []
 
     for row in range(0, len(lines)) :
-        numbersAdjacentToAnyOfTheSymbols.append(list(filter(lambda number: areAnyRangesOverlapping(rangeOf(number), map(rangeOf, eachSymbolRowMergedWithPreviousCurrentAndNext[row])), numbers[row])))
+        numberTuplesAdjacentToAnyOfTheSymbols.append(list(filter(lambda number: areAnyRangesOverlapping(rangeOf(number), map(rangeOf, eachSymbolRowMergedWithPreviousCurrentAndNext[row])), numbers[row])))
     
-    return sumNumbers(numbersAdjacentToAnyOfTheSymbols)
+    return reduce(add, map(numberOf, flatten(numberTuplesAdjacentToAnyOfTheSymbols)))
 
 print(part1(testInput)) #4361
 print(part1(puzzleInput)) #519444
