@@ -160,8 +160,14 @@ def parseNumbers(s) :
         match = m.group(1)
         if(match != '') :
             span = m.span(1)
-            results.append((range(span[0], span[1]), m.group(1)))
+            results.append((range(span[0], span[1]), match))
     return results
+
+def numberOf(tuple):
+    return int(tuple[-1])
+
+def rangeOf(tuple):
+    return tuple[0]
 
 def parseSymbols(s):
     results = []  
@@ -172,7 +178,7 @@ def parseSymbols(s):
             results.append((range(max(0, span[0] - 1), min(len(s), span[1] + 1)), match))
     return results
 
-def mergeEachRowWithPreviousCurrentAndNextRow(rows):
+def eachRowMergedWithPreviousCurrentAndNextRow(rows):
     eachRowMergedWithPreviousCurrentAndNext = []
 
     for row in range(0, len(rows)) :
@@ -184,10 +190,10 @@ def mergeEachRowWithPreviousCurrentAndNextRow(rows):
     return eachRowMergedWithPreviousCurrentAndNext
 
 def isOverlapping(ra, rb):
-    return ra[-1]   >= rb[0] and rb[-1] >= ra[0]
+    return ra[-1] >= rb[0] and rb[-1] >= ra[0]
 
-def adjacentToAnyOfTheSymbols(n, symbols):
-    return any(map(lambda s: isOverlapping(n[0], s[0]), symbols))
+def areAnyRangesOverlapping(aRange, otherRanges):
+    return any(map(lambda otherRange: isOverlapping(aRange, otherRange), otherRanges))
 
 def add(a, b):
     return a + b
@@ -196,18 +202,18 @@ def flatten(matrix):
      return list(reduce(add, matrix, []))
 
 def sumNumbers(allNumbers):
-    return reduce(add, flatten(map(lambda numbers: list(map(lambda n: int(n[-1]), numbers)), allNumbers)))
+    return reduce(add, flatten(map(lambda numbers: list(map(numberOf, numbers)), allNumbers)))
 
 def part1(s) :
     lines = s.splitlines()
     numbers = list(map(parseNumbers, lines))
     symbols = list(map(parseSymbols, lines))
-    symbolsMergedWithPreviousCurrentAndNextRow = mergeEachRowWithPreviousCurrentAndNextRow(symbols)
+    eachSymbolRowMergedWithPreviousCurrentAndNext = eachRowMergedWithPreviousCurrentAndNextRow(symbols)
 
     numbersAdjacentToAnyOfTheSymbols = []
 
     for row in range(0, len(lines)) :
-        numbersAdjacentToAnyOfTheSymbols.append(list(filter(lambda n: adjacentToAnyOfTheSymbols(n, symbolsMergedWithPreviousCurrentAndNextRow[row]), numbers[row])))
+        numbersAdjacentToAnyOfTheSymbols.append(list(filter(lambda number: areAnyRangesOverlapping(rangeOf(number), map(rangeOf, eachSymbolRowMergedWithPreviousCurrentAndNext[row])), numbers[row])))
     
     return sumNumbers(numbersAdjacentToAnyOfTheSymbols)
 
