@@ -154,7 +154,6 @@ testInput = """467..114..
 ...$.*....
 .664.598.."""
 
-
 def parseNumbers(s) :
     results = []
     for m in re.finditer('(\d*)', s):
@@ -173,24 +172,19 @@ def parseSymbols(s):
             results.append((range(max(0, span[0] - 1), min(len(s), span[1] + 1)), match))
     return results
 
-def calculateAllSymbols(lines):
-    symbols = list(map(parseSymbols, lines))
-    allsymbols = []
+def mergeEachRowWithPreviousCurrentAndNextRow(rows):
+    eachRowMergedWithPreviousCurrentAndNext = []
 
-    for row in range(0, len(lines)) :
-        symbolsPreviousRow = symbols[row - 1].copy() if row > 0 else []
-        symbolsCurrentRow = symbols[row].copy()
-        symbolsNextRow = symbols[row + 1].copy() if (row + 1) < len(lines) else []
-        allsymbols.append(symbolsPreviousRow + symbolsCurrentRow + symbolsNextRow)
+    for row in range(0, len(rows)) :
+        previousRow = rows[row - 1].copy() if row > 0 else []
+        currentRow = rows[row].copy()
+        nextRow = rows[row + 1].copy() if (row + 1) < len(rows) else []
+        eachRowMergedWithPreviousCurrentAndNext.append(previousRow + currentRow + nextRow)
 
-    return allsymbols
+    return eachRowMergedWithPreviousCurrentAndNext
 
 def isOverlapping(ra, rb):
-    ra_start = ra[0]
-    ra_end = ra[-1]     
-    rb_start = rb[0]
-    rb_end = rb[-1]
-    return ra_end >= rb_start and rb_end >= ra_start
+    return ra[-1]   >= rb[0] and rb[-1] >= ra[0]
 
 def adjacentToAnyOfTheSymbols(n, symbols):
     return any(map(lambda s: isOverlapping(n[0], s[0]), symbols))
@@ -207,14 +201,15 @@ def sumNumbers(allNumbers):
 def part1(s) :
     lines = s.splitlines()
     numbers = list(map(parseNumbers, lines))
-    allsymbols = calculateAllSymbols(lines)
+    symbols = list(map(parseSymbols, lines))
+    symbolsMergedWithPreviousCurrentAndNextRow = mergeEachRowWithPreviousCurrentAndNextRow(symbols)
 
-    numbersAdjacentAnyOfTheSymbols = []
+    numbersAdjacentToAnyOfTheSymbols = []
 
     for row in range(0, len(lines)) :
-        numbersAdjacentAnyOfTheSymbols.append(list(filter(lambda n: adjacentToAnyOfTheSymbols(n, allsymbols[row]), numbers[row])))
+        numbersAdjacentToAnyOfTheSymbols.append(list(filter(lambda n: adjacentToAnyOfTheSymbols(n, symbolsMergedWithPreviousCurrentAndNextRow[row]), numbers[row])))
     
-    return sumNumbers(numbersAdjacentAnyOfTheSymbols)
+    return sumNumbers(numbersAdjacentToAnyOfTheSymbols)
 
 print(part1(testInput)) #4361
 print(part1(puzzleInput)) #519444
