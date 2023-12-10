@@ -154,29 +154,50 @@ testInput = """467..114..
 ...$.*....
 .664.598.."""
 
-def parseNumbers(s) :
-    results = []
-    for m in re.finditer('(\d*)', s):
-        match = m.group(1)
-        if(match != '') :
-            span = m.span(1)
-            results.append((range(span[0], span[1]), match))
-    return results
+#from: https://www.composingprograms.com/pages/16-higher-order-functions.html#currying
+def curry2(f):
+        """Return a curried version of the given two-argument function."""
+        def g(x):
+            def h(y):
+                return f(x, y)
+            return h
+        return g
 
-def numberOf(tuple):
-    return int(tuple[-1])
+def curryWith(f, aParam):
+    return curry2(f)(aParam)
 
-def rangeOf(tuple):
+def first(tuple):
     return tuple[0]
 
+def last(tuple):
+    return tuple[-1]
+
+def groupAndSpan(match):
+    return match.group(1), match.span(1)
+
+def groupNotEmpty(groupAndSpan):
+    return first(groupAndSpan) != ''
+
+def groupNotDot(groupAndSpan):
+    return first(groupAndSpan) != '.'
+
+def combinedAsTupleTakeOccurenceAsRangeAndNumber(groupAndSpan):
+    return range(first(last(groupAndSpan)), last(last(groupAndSpan))), first(groupAndSpan)
+
+def parseNumbers(s) :
+    return list(map(combinedAsTupleTakeOccurenceAsRangeAndNumber, filter(groupNotEmpty, map(groupAndSpan, re.finditer('(\d*)', s)))))
+
+def combinedAsTupleTakeLargerOccurenceAsRangeAndNumber(s, groupAndSpan):
+    return range(max(0, first(last(groupAndSpan)) - 1), min(len(s), last(last(groupAndSpan)) + 1)), first(groupAndSpan)
+
 def parseSymbols(s):
-    results = []  
-    for m in re.finditer('(\D{1})', s) :
-        match = m.group(1)
-        if(match != '.') :
-            span = m.span(1)
-            results.append((range(max(0, span[0] - 1), min(len(s), span[1] + 1)), match))
-    return results
+    return list(map(curryWith(combinedAsTupleTakeLargerOccurenceAsRangeAndNumber, s), filter(groupNotDot, map(groupAndSpan, re.finditer('(\D{1})', s)))))
+
+def numberOf(tuple):
+    return int(last(tuple))
+
+def rangeOf(tuple):
+    return first(tuple)
 
 def eachRowMergedWithPreviousCurrentAndNextRow(rows):
     eachRowMergedWithPreviousCurrentAndNext = []
@@ -189,18 +210,6 @@ def eachRowMergedWithPreviousCurrentAndNextRow(rows):
 
     return eachRowMergedWithPreviousCurrentAndNext
 
-#from: https://www.composingprograms.com/pages/16-higher-order-functions.html#currying
-def curry2(f):
-        """Return a curried version of the given two-argument function."""
-        def g(x):
-            def h(y):
-                return f(x, y)
-            return h
-        return g
-
-def curryWith(f, aRange):
-    return curry2(f)(aRange)
-
 def isOverlapping(ra, rb):
     return ra[-1] >= rb[0] and rb[-1] >= ra[0]
 
@@ -211,14 +220,20 @@ def add(a, b):
     return a + b
 
 def flatten(matrix):
-     return list(reduce(add, matrix, []))
+     return list(reduce(add, matrix, [])) 
 
 def part1(s) :
     lines = s.splitlines()
     numbers = list(map(parseNumbers, lines))
     symbols = list(map(parseSymbols, lines))
+    print(symbols)
     eachSymbolRowMergedWithPreviousCurrentAndNext = eachRowMergedWithPreviousCurrentAndNextRow(symbols)
+    # map voor elke row -> filter uit de numbers degene die voldoen aan areAnyRangesOverlapping(rangeOf(number), map(rangeOf, eachSymbolRowMergedWithPreviousCurrentAndNext[row]))
 
+    #print(list(map(, zip(numbers, eachSymbolRowMergedWithPreviousCurrentAndNext))))
+
+    zip(numbers, eachSymbolRowMergedWithPreviousCurrentAndNext)
+    
     numberTuplesAdjacentToAnyOfTheSymbols = []
 
     for row in range(0, len(lines)) :
