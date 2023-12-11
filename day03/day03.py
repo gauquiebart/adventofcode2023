@@ -240,15 +240,13 @@ def part1(s) :
     numbers = list(map(parseNumbers, lines))
     symbols = list(map(parseSymbols, lines))
     eachSymbolRowMergedWithPreviousCurrentAndNext = eachRowMergedWithPreviousCurrentAndNextRow(symbols)
-
-    numberTuplesAdjacentToAnyOfTheSymbols = []
-
-    for row in range(0, len(lines)) :
-        numberTuplesAdjacentToAnyOfTheSymbols.append(list(filter(lambda number: areAnyRangesOverlapping(map(rangeOf, eachSymbolRowMergedWithPreviousCurrentAndNext[row]),
-                                                                                                        rangeOf(number)), 
-                                                                numbers[row])))
     
-    return reduce(add, map(numberOf, flatten(numberTuplesAdjacentToAnyOfTheSymbols)))
+    return reduce(add,
+                  map(numberOf, 
+                      flatten(list(map(lambda row: list(filter(lambda number: areAnyRangesOverlapping(map(rangeOf, eachSymbolRowMergedWithPreviousCurrentAndNext[row]),
+                                                                                                      rangeOf(number)), 
+                                                               numbers[row])),
+                                        range(0, len(lines)))))))
 
 print(part1(testInput)) #4361
 print(part1(puzzleInput)) #519444
