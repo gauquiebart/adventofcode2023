@@ -1,6 +1,5 @@
 import re
 from functools import reduce
-from functools import reduce
 
 puzzleInput = """.......................661.........................485..565.......344.......325.....................................841.....725.............
 ....*609..131................512.......................*................536*..............462/..-...60..424.........@....$.*................
@@ -166,55 +165,69 @@ def curry2(f):
 def curryWith(f, aParam):
     return curry2(f)(aParam)
 
-def first(tuple):
+def firstOfTuple(tuple):
     return tuple[0]
 
-def last(tuple):
-    return tuple[-1]
+def secondOfTuple(tuple):
+    return tuple[1]
 
 def groupAndSpan(match):
     return match.group(1), match.span(1)
 
+def span(groupAndSpan):
+    return secondOfTuple(groupAndSpan)
+
+def group(groupAndSpan):
+    return firstOfTuple(groupAndSpan)
+
 def groupNotEmpty(groupAndSpan):
-    return first(groupAndSpan) != ''
+    return group(groupAndSpan) != ''
 
 def groupNotDot(groupAndSpan):
-    return first(groupAndSpan) != '.'
+    return group(groupAndSpan) != '.'
 
 def combinedAsTupleTakeOccurenceAsRangeAndNumber(groupAndSpan):
-    return range(first(last(groupAndSpan)), last(last(groupAndSpan))), first(groupAndSpan)
+    return range(firstOfTuple(span(groupAndSpan)), secondOfTuple(span(groupAndSpan))), group(groupAndSpan)
 
 def parseNumbers(s) :
-    return list(map(combinedAsTupleTakeOccurenceAsRangeAndNumber, filter(groupNotEmpty, map(groupAndSpan, re.finditer('(\d*)', s)))))
+    return list(
+                map(combinedAsTupleTakeOccurenceAsRangeAndNumber, 
+                    filter(groupNotEmpty, 
+                           map(groupAndSpan, 
+                               re.finditer('(\d*)', s)))))
 
 def combinedAsTupleTakeLargerOccurenceAsRangeAndNumber(s, groupAndSpan):
-    return range(max(0, first(last(groupAndSpan)) - 1), min(len(s), last(last(groupAndSpan)) + 1)), first(groupAndSpan)
+    return range(max(0, firstOfTuple(span(groupAndSpan)) - 1), min(len(s), secondOfTuple(span(groupAndSpan)) + 1)), group(groupAndSpan)
 
 def parseSymbols(s):
-    return list(map(curryWith(combinedAsTupleTakeLargerOccurenceAsRangeAndNumber, s), filter(groupNotDot, map(groupAndSpan, re.finditer('(\D{1})', s)))))
+    return list(
+                map(
+                    curryWith(combinedAsTupleTakeLargerOccurenceAsRangeAndNumber, s), 
+                    filter(groupNotDot, 
+                           map(groupAndSpan, 
+                               re.finditer('(\D{1})', s)))))
 
 def numberOf(tuple):
-    return int(last(tuple))
+    return int(secondOfTuple(tuple))
 
 def rangeOf(tuple):
-    return first(tuple)
+    return firstOfTuple(tuple)
 
 def eachRowMergedWithPreviousCurrentAndNextRow(rows):
-    eachRowMergedWithPreviousCurrentAndNext = []
-
-    for row in range(0, len(rows)) :
-        previousRow = rows[row - 1].copy() if row > 0 else []
-        currentRow = rows[row].copy()
-        nextRow = rows[row + 1].copy() if (row + 1) < len(rows) else []
-        eachRowMergedWithPreviousCurrentAndNext.append(previousRow + currentRow + nextRow)
-
-    return eachRowMergedWithPreviousCurrentAndNext
+    return list(map(lambda row: 
+                        (rows[row - 1].copy() if row > 0 else []) + 
+                        (rows[row].copy()) +
+                        (rows[row + 1].copy() if (row + 1) < len(rows) else []),
+                    range(0, len(rows))))
 
 def isOverlapping(ra, rb):
     return ra[-1] >= rb[0] and rb[-1] >= ra[0]
 
-def areAnyRangesOverlapping(aRange, otherRanges):
-    return any(map(curryWith(isOverlapping, aRange), otherRanges))
+def areAnyRangesOverlapping(ranges, otherRange):
+    return any(
+                map(
+                    curryWith(isOverlapping, otherRange), 
+                    ranges))
 
 def add(a, b):
     return a + b
@@ -226,18 +239,14 @@ def part1(s) :
     lines = s.splitlines()
     numbers = list(map(parseNumbers, lines))
     symbols = list(map(parseSymbols, lines))
-    print(symbols)
     eachSymbolRowMergedWithPreviousCurrentAndNext = eachRowMergedWithPreviousCurrentAndNextRow(symbols)
-    # map voor elke row -> filter uit de numbers degene die voldoen aan areAnyRangesOverlapping(rangeOf(number), map(rangeOf, eachSymbolRowMergedWithPreviousCurrentAndNext[row]))
 
-    #print(list(map(, zip(numbers, eachSymbolRowMergedWithPreviousCurrentAndNext))))
-
-    zip(numbers, eachSymbolRowMergedWithPreviousCurrentAndNext)
-    
     numberTuplesAdjacentToAnyOfTheSymbols = []
 
     for row in range(0, len(lines)) :
-        numberTuplesAdjacentToAnyOfTheSymbols.append(list(filter(lambda number: areAnyRangesOverlapping(rangeOf(number), map(rangeOf, eachSymbolRowMergedWithPreviousCurrentAndNext[row])), numbers[row])))
+        numberTuplesAdjacentToAnyOfTheSymbols.append(list(filter(lambda number: areAnyRangesOverlapping(map(rangeOf, eachSymbolRowMergedWithPreviousCurrentAndNext[row]),
+                                                                                                        rangeOf(number)), 
+                                                                numbers[row])))
     
     return reduce(add, map(numberOf, flatten(numberTuplesAdjacentToAnyOfTheSymbols)))
 
