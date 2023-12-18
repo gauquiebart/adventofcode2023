@@ -153,6 +153,8 @@ testInput = """467..114..
 ...$.*....
 .664.598.."""
 
+true  = lambda *_: True
+
 #from: https://www.composingprograms.com/pages/16-higher-order-functions.html#currying
 def curry2(f):
         """Return a curried version of the given two-argument function."""
@@ -161,7 +163,7 @@ def curry2(f):
                 return f(x, y)
             return h
         return g
-
+ 
 def curryWith(f, aParam):
     return curry2(f)(aParam)
 
@@ -170,6 +172,9 @@ def firstOfTuple(tuple):
 
 def secondOfTuple(tuple):
     return tuple[1]
+
+def thirdOfTuple(tuple):
+    return tuple[2]
 
 def groupAndSpan(match):
     return match.group(1), match.span(1)
@@ -199,13 +204,14 @@ def parseNumbers(s) :
 def combinedAsTupleTakeLargerOccurenceAsRangeAndNumber(s, groupAndSpan):
     return range(max(0, firstOfTuple(span(groupAndSpan)) - 1), min(len(s), secondOfTuple(span(groupAndSpan)) + 1)), group(groupAndSpan)
 
-def parseSymbols(s):
+def parseSymbols(symbolFilter, s):
     return list(
                 map(
                     curryWith(combinedAsTupleTakeLargerOccurenceAsRangeAndNumber, s), 
-                    filter(groupNotDot, 
-                           map(groupAndSpan, 
-                               re.finditer('(\D{1})', s)))))
+                    filter(symbolFilter, 
+                           filter(groupNotDot, 
+                                map(groupAndSpan, 
+                                    re.finditer('(\D{1})', s))))))
 
 def numberOf(tuple):
     return int(secondOfTuple(tuple))
@@ -223,14 +229,22 @@ def eachRowMergedWithPreviousCurrentAndNextRow(rows):
 def isOverlapping(ra, rb):
     return ra[-1] >= rb[0] and rb[-1] >= ra[0]
 
+def overlappingRanges(ranges, otherRange):
+    return list(filter(curryWith(isOverlapping, otherRange), 
+                       ranges))
+
 def areAnyRangesOverlapping(ranges, otherRange):
-    return any(
-                map(
-                    curryWith(isOverlapping, otherRange), 
-                    ranges))
+    return len(overlappingRanges(ranges, otherRange)) > 0
+
+def tuplesThatOverlapRangeWith(tuples, otherTuple): 
+    return list(filter(lambda tuple: isOverlapping(rangeOf(tuple), rangeOf(otherTuple)),
+                       tuples))
 
 def add(a, b):
     return a + b
+
+def multiply(a, b):
+    return a * b
 
 def flatten(matrix):
      return list(reduce(add, matrix, [])) 
@@ -238,7 +252,7 @@ def flatten(matrix):
 def part1(s) :
     lines = s.splitlines()
     numbers = list(map(parseNumbers, lines))
-    symbols = list(map(parseSymbols, lines))
+    symbols = list(map(curryWith(parseSymbols, true), lines))
     eachSymbolRowMergedWithPreviousCurrentAndNext = eachRowMergedWithPreviousCurrentAndNextRow(symbols)
     
     return reduce(add,
@@ -248,5 +262,30 @@ def part1(s) :
                                                                numbers[row])),
                                         range(0, len(lines)))))))
 
+def isPossibleGearSymbol(groupAndSpan):
+    return group(groupAndSpan) == "*"
+
+def part2(s):
+    lines = s.splitlines()
+    numbers = list(map(parseNumbers, lines))
+    possibleGearSymbols = list(map(curryWith(parseSymbols, isPossibleGearSymbol), lines))
+    eachNumberRowMergedWithPreviousCurrentAndNext = eachRowMergedWithPreviousCurrentAndNextRow(numbers)
+
+    def overlappingRanges(t):
+        gearSymbolsRow = firstOfTuple(t)
+        numbersRow = secondOfTuple(t)
+        return list(map(lambda gearSymbol: tuplesThatOverlapRangeWith(numbersRow, gearSymbol),
+                        gearSymbolsRow))
+    
+    return reduce(add, 
+                  map(lambda exactlyTwoNumbers: reduce(multiply, map(numberOf, exactlyTwoNumbers)),
+                      list(filter(lambda overlappingTuples: len(overlappingTuples) == 2,
+                                  flatten(list(map(overlappingRanges,
+                                                   zip(possibleGearSymbols,
+                                                       eachNumberRowMergedWithPreviousCurrentAndNext))))))))           
+
 print(part1(testInput)) #4361
 print(part1(puzzleInput)) #519444
+
+print(part2(testInput)) #467835
+print(part2(puzzleInput)) #74528807
